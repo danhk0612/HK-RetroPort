@@ -1,0 +1,6 @@
+/data/
+/.env
+/release/
+/release-candidate/
+__pycache__/
+*.pyc

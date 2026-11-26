@@ -1,0 +1,69 @@
+name: hk-retroport
+x-runtime: &runtime
+  image: ${RETROPORT_IMAGE:-hk-retroport:1.1}
+  pull_policy: never
+services:
+  launcher:
+    <<: *runtime
+    build: .
+    labels: { retroport.catalog: "true" }
+    shm_size: 1gb
+    environment:
+      START_DOCKER: "false"
+      PIXELFLUX_WAYLAND: "false"
+      RETROPORT_STORAGE_NAMESPACE: ${RETROPORT_STORAGE_NAMESPACE:-retroport}
+      TITLE: HK-RetroPort
+      PUID: ${PUID:-911}
+      PGID: ${PGID:-911}
+    volumes:
+      - ${RETROPORT_DATA:-./data}/library:/library:ro
+      - ${RETROPORT_DATA:-./data}/library/Games:/library/Games
+      - ${RETROPORT_DATA:-./data}/collections:/collections
+      - ${RETROPORT_DATA:-./data}/settings:/settings
+      - ${RETROPORT_DATA:-./data}/operator:/config
+      - ${RETROPORT_DATA:-./data}/cores:/operator-cores
+  admin:
+    <<: *runtime
+    depends_on: [launcher]
+    entrypoint: ["nginx", "-c", "/opt/retroport/admin-nginx.conf", "-g", "daemon off;"]
+    ports: ["127.0.0.1:${RETROPORT_ADMIN_PORT:-18099}:8080"]
+    tmpfs: [/config]
+    volumes: ["${RETROPORT_DATA:-./data}/admin-auth:/auth:ro"]
+  admin-password:
+    <<: *runtime
+    profiles: [setup]
+    network_mode: none
+    entrypoint: ["python3", "/opt/retroport/admin-password.py"]
+    tmpfs: [/config]
+    volumes: ["${RETROPORT_DATA:-./data}/admin-auth:/auth"]
+  sessions:
+    <<: *runtime
+    entrypoint: ["/usr/bin/python3", "/opt/retroport/sessions.py"]
+    network_mode: none
+    depends_on: [launcher]
+    stop_grace_period: 120s
+    environment:
+      RETROPORT_STORAGE_NAMESPACE: ${RETROPORT_STORAGE_NAMESPACE:-retroport}
+      RETROPORT_MAX_SESSIONS: ${RETROPORT_MAX_SESSIONS:-4}
+      RETROPORT_IDLE_SECONDS: ${RETROPORT_IDLE_SECONDS:-1800}
+      PUID: ${PUID:-911}
+      PGID: ${PGID:-911}
+    tmpfs: [/config]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - broker:/broker
+      - ${RETROPORT_DATA:-./data}/identity:/identity
+      - ${RETROPORT_DATA:-./data}/players:/players
+      - ${RETROPORT_DATA:-./data}/endpoints:/endpoints
+  public:
+    <<: *runtime
+    entrypoint: ["nginx", "-c", "/opt/retroport/public-nginx.conf", "-g", "daemon off;"]
+    ports:
+      - "${RETROPORT_LISTEN:-127.0.0.1}:${RETROPORT_PORT:-18098}:8080"
+    depends_on: [sessions]
+    tmpfs: [/config]
+    volumes:
+      - broker:/broker:ro
+      - ${RETROPORT_DATA:-./data}/endpoints:/endpoints:ro
+volumes:
+  broker: {}

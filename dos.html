@@ -1,0 +1,43 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-only -->
+<html lang="ko">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><link rel="stylesheet" href="/library/cores/jsdos/js-dos.css" /><link rel="icon" type="image/png" href="/library/icon.png">
+<title>
+    DOS 플레이</title
+  ><style>
+    body {
+      margin: 0;
+      background: #101518;
+      color: #eef4eb;
+      font: 16px system-ui;
+    }
+    header {
+      padding: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    button {
+      font: inherit;
+      padding: 0.35rem;
+    }
+    #game {
+      height: calc(100dvh - 4.5rem);
+      width: 100%;
+    }
+  </style>
+  <header>
+    <strong id="title"></strong><button id="exit">저장 후 종료</button
+    ><button id="full">전체 화면</button><button id="mute">음소거</button
+    ><button id="release">마우스 해제</button
+    ><button id="apply" hidden>게임에 적용</button
+    ><span id="status" role="status"></span>
+  </header>
+  <div id="game"></div>
+  <script src="/library/cores/jsdos/js-dos.js"></script>
+  <script type="module" src="/library/dos.js"></script>
+</html>

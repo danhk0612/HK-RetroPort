@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><link rel="icon" type="image/png" href="/library/icon.png">
+<title>HK-RetroPort 관리</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font: 16px system-ui;
+      background: #101518;
+      color: #eff5ef;
+    }
+    body {
+      max-width: 64rem;
+      margin: auto;
+      padding: 1.5rem;
+    }
+    a {
+      color: #c7ed9b;
+    }
+    nav,
+    header,
+    .bar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    header {
+      justify-content: space-between;
+    }
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      padding: 0.45rem;
+      border: 1px solid #52655d;
+      border-radius: 0.35rem;
+    }
+    button {
+      cursor: pointer;
+    }
+    section {
+      padding: 1rem 0;
+      border-top: 1px solid #405049;
+    }
+    label {
+      display: grid;
+      gap: 0.3rem;
+      margin: 0.5rem 0;
+    }
+    fieldset {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+      gap: 0.4rem 1rem;
+      border: 0;
+      padding: 0;
+    }
+    textarea {
+      min-height: 4rem;
+    }
+    #pick {
+      width: 100%;
+      margin: 0.6rem 0;
+    }
+    #status {
+      min-height: 1.5rem;
+      color: #c7ed9b;
+      white-space: pre-wrap;
+    }
+    summary {
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.45;
+    }
+    li {
+      margin: 0.65rem 0;
+    }
+    li button {
+      margin-left: 0.5rem;
+    }
+  </style>
+  <header>
+    <h1>런처 관리</h1>
+    <nav>
+      <a href="/library/">플레이 목록</a><a href="/library/manage/">관리</a
+      ><a href="/library/manage/trash/">휴지통</a>
+    </nav>
+  </header>
+  <p id="status" role="status"></p>
+  <main id="active">
+    <section>
+      <h2>실행기 관리</h2>
+      <p id="core-info">PC-98 브라우저 실행기 확인 중</p>
+      <a id="core-source" target="_blank" rel="noopener">지원 버전과 원본 파일</a>
+      <p id="core-files"></p>
+      <label>코어 ZIP 또는 개별 파일 <input id="core-input" type="file" multiple></label>
+      <button type="button" id="core-install">PC-98 코어 설치</button>
+    </section>
+    <section>
+      <h2>게임 관리</h2>
+      <input
+        id="search"
+        type="search"
+        placeholder="제목 또는 기종 검색"
+      /><select id="pick" size="6" aria-label="게임 선택"></select>
+      <form id="edit">
+        <fieldset id="fields"></fieldset>
+        <datalist id="paths"></datalist>
+        <div class="bar">
+          <button>변경 저장</button
+          ><button type="button" id="test">시험 실행</button
+          ><button type="button" id="trash">휴지통으로 이동</button
+          ><button type="button" id="apply" hidden>
+            서버 에디터 변경을 게임에 적용
+          </button>
+        </div>
+      </form>
+      <details>
+        <summary>선택한 게임에 자료 첨부</summary>
+        <select id="attachmentType">
+          <option value="icon">아이콘</option>
+          <option value="screenshots">스크린샷 추가</option>
+          <option value="manual">매뉴얼</option>
+        </select>
+        <input id="attachment" type="file" />
+        <button id="attach">첨부 저장</button>
+      </details>
+    </section>
+    <section>
+      <h2>게임 가져오기</h2>
+      <div class="bar">
+        <label
+          >게임 폴더 또는 여러 게임의 상위 폴더<input
+            id="folder"
+            type="file"
+            webkitdirectory
+            multiple /></label
+        ><label
+          >ZIP · 7z<input id="archive" type="file" accept=".zip,.7z"
+        /></label>
+      </div>
+      <button id="preview">미리보기</button>
+      <form id="imports"></form>
+    </section>
+    <section>
+      <h2>실행 설정</h2>
+      <label
+        >적용 범위<select id="scope">
+          <option value="global">런처 전체</option>
+          <option value="dos">DOS 기본값</option>
+          <option value="pc98">PC-98 기본값</option>
+          <option value="pc88">PC-88 기본값</option>
+          <option value="windows">Windows 기본값</option>
+          <option value="game">선택한 게임</option>
+        </select></label
+      >
+      <form id="prefs">
+        <fieldset></fieldset>
+        <button>설정 저장</button>
+        <button type="button" id="reset">상속값으로 복원</button>
+      </form>
+      <p>
+        빈 값은 상위 설정을 따릅니다. DirectX와 창 위치는 원본 Windows 실행기에
+        적용되는 옵션입니다.
+      </p>
+    </section>
+  </main>
+  <section id="bin" hidden>
+    <h2>휴지통</h2>
+    <ul></ul>
+  </section>
+  <script type="module" src="/library/management.js"></script>
+</html>

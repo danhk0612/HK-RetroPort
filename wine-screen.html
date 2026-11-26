@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="/library/icon.png">
+<title>Windows 게임 화면</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: black; }
+  #display { position: absolute; top: 50%; left: 50%; width: 640px; height: 480px; transform: translate(-50%, -50%) scale(var(--scale, 1)); }
+  iframe, #controls { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  #controls { outline: none; touch-action: none; }
+</style>
+<div id="display">
+  <iframe title="Windows 게임 스트림" src="/?stream=1" allow="autoplay; fullscreen" allowfullscreen></iframe>
+  <div id="controls" tabindex="0" aria-label="게임 입력"></div>
+</div>
+<script>
+  const frame = document.querySelector('iframe');
+  const controls = document.querySelector('#controls');
+  const game = new URLSearchParams(location.search).get('game');
+  const mystic = game === 'mystic.exe';
+  const relativeMouse = game === 'adf.exe';
+  const drawsCursor = relativeMouse || game === 'fifawc.exe';
+  if (drawsCursor) controls.style.cursor = 'none';
+  // Leave room for the DOSBox-X title bar above the 480-line Windows desktop.
+  const height = game === 'devilf.exe' ? 508 : 480;
+  document.querySelector('#display').style.height = height + 'px';
+  let x = 320, y = 240, buttons = 0;
+  const held = new Map();
+  let carryX = 0, carryY = 0;
+  let previousClient = null;
+
+  function resize() {
+    document.documentElement.style.setProperty('--scale', Math.min(innerWidth / 640, innerHeight / height));
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function pointer(dx = 0, dy = 0) {
+    const input = frame.contentWindow.webrtcInput;
+    if (!input?.inputAttached) return;
+    if (relativeMouse) {
+      // ADF maintains its own DirectInput cursor, including movement at the desktop edges.
+      const rect = controls.getBoundingClientRect();
+      carryX += dx * 640 / rect.width;
+      carryY += dy * height / rect.height;
+      const stepX = Math.trunc(carryX), stepY = Math.trunc(carryY);
+      carryX -= stepX;
+      carryY -= stepY;
+      input._sendPointer(['m2', stepX, stepY, buttons, 0], false);
+    } else {
+      input._sendPointer(['m', Math.round(x), Math.round(y), buttons, 0], false);
+    }
+  }
+
+  function position(event) {
+    const rect = controls.getBoundingClientRect();
+    if (document.pointerLockElement === controls) {
+      if (event.type !== 'pointermove') return;
+      x += event.movementX * 640 / rect.width;
+      y += event.movementY * height / rect.height;
+    } else {
+      x = (event.clientX - rect.left) * 640 / rect.width;
+      y = (event.clientY - rect.top) * height / rect.height;
+    }
+    x = Math.max(0, Math.min(639, x));
+    y = Math.max(0, Math.min(height - 1, y));
+  }
+
+  for (const type of ['pointermove', 'pointerdown', 'pointerup']) {
+    controls.addEventListener(type, event => {
+      const input = frame.contentWindow.webrtcInput;
+      if (!input?.inputAttached) return;
+      const locked = document.pointerLockElement === controls;
+      let dx = 0, dy = 0;
+      if (type === 'pointermove') {
+        if (locked) {
+          dx = event.movementX;
+          dy = event.movementY;
+        } else if (previousClient) {
+          dx = event.clientX - previousClient.x;
+          dy = event.clientY - previousClient.y;
+        }
+      }
+      previousClient = locked ? null : {x: event.clientX, y: event.clientY};
+      if (!relativeMouse) position(event);
+      buttons = (event.buttons & 1) | ((event.buttons & 4) >> 1) | ((event.buttons & 2) << 1);
+      pointer(dx, dy);
+      if (type === 'pointerdown') {
+        controls.focus({preventScroll: true});
+        if (!mystic && event.pointerType === 'mouse' && !document.pointerLockElement) {
+          controls.requestPointerLock?.()?.catch(() => {});
+        }
+        input.send('SET_NATIVE_CURSOR_RENDERING,' + (drawsCursor ? '0' : '1'));
+        if (drawsCursor && input.cursorDiv) input.cursorDiv.style.setProperty('display', 'none', 'important');
+        for (const media of frame.contentDocument.querySelectorAll('audio,video')) media.play().catch(() => {});
+      }
+    });
+  }
+  controls.addEventListener('pointerleave', () => { previousClient = null; });
+  controls.oncontextmenu = event => event.preventDefault();
+
+  function key(event) {
+    const stream = frame.contentWindow;
+    const input = stream.webrtcInput;
+    if (!input?.inputAttached) return;
+    event.preventDefault();
+    const down = event.type === 'keydown';
+    if (mystic && /^(Key[A-Z]|Digit[0-9])$/.test(event.code)) {
+      const sym = event.code.slice(-1).toLowerCase().charCodeAt(0);
+      if (down && held.has(event.code)) return;
+      input.send((down ? 'kd,' : 'ku,') + sym);
+      if (down) held.set(event.code, sym);
+      else held.delete(event.code);
+    } else {
+      input.element.dispatchEvent(new stream.KeyboardEvent(event.type, {
+        key: event.key, code: event.code, keyCode: event.keyCode, location: event.location,
+        ctrlKey: event.ctrlKey, shiftKey: event.shiftKey, altKey: event.altKey, metaKey: event.metaKey,
+        repeat: event.repeat, bubbles: true, cancelable: true
+      }));
+    }
+  }
+  controls.onkeydown = controls.onkeyup = key;
+
+  function release() {
+    previousClient = null;
+    const input = frame.contentWindow.webrtcInput;
+    if (buttons) { buttons = 0; pointer(); }
+    for (const sym of held.values()) input?.send('ku,' + sym);
+    held.clear();
+    input?.resetKeyboard();
+  }
+  controls.addEventListener('blur', release);
+  controls.addEventListener('pointercancel', release);
+  document.addEventListener('pointerlockchange', () => {
+    previousClient = null;
+    carryX = carryY = 0;
+    if (!document.pointerLockElement) release();
+  });
+  window.addEventListener('blur', release);
+  window.addEventListener('pagehide', release);
+</script>
+</html>

@@ -1,0 +1,11 @@
+LIBRARY DF3KR
+EXPORTS
+    CreateFontA=GDI32.CreateFontA
+    DeleteObject=GDI32.DeleteObject
+    GetStockObject=GDI32.GetStockObject
+    GetSystemPaletteEntries=GDI32.GetSystemPaletteEntries
+    GetTextMetricsA=GDI32.GetTextMetricsA
+    SelectObject=GDI32.SelectObject
+    SetBkMode=GDI32.SetBkMode
+    SetTextColor=GDI32.SetTextColor
+    TextOutA=RenderText@20

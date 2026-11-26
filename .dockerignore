@@ -1,0 +1,17 @@
+*
+!Dockerfile
+!*.py
+!*.html
+!*.js
+!df3text.c
+!df3text.def
+!public-nginx.conf
+!admin-nginx.conf
+!LICENSE
+!init-data.sh
+!THIRD-PARTY.ko.md
+!icon.png
+!packaging/
+!packaging/notices/
+!packaging/notices/*
+!COPYING-GPL-2
