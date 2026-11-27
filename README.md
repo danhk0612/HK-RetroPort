@@ -6,6 +6,11 @@
 
 [최신 버전 다운로드](https://github.com/danhk0612/HK-RetroPort/releases/latest)
 
+## 처음 시작하기
+
+- **새 Windows PC에 설치할 때**는 Docker Desktop 준비부터 첫 게임 등록, 다른 PC에서 접속하는 방법까지 순서대로 따라가세요. [Windows 설치와 첫 게임 등록](docs/windows-setup.md)
+- **게임팩을 만들거나 받았을 때**는 기존 목록에 게임을 추가할지, 새 서버에 게임과 설정을 함께 복원할지 선택하세요. [게임팩 제작과 적용](docs/game-packs.md)
+
 ## 플레이어용 안내
 
 1. 운영자에게 받은 주소에서 제목을 검색하거나 장르·기종으로 목록을 좁힙니다. 같은 작품에 여러 판본이 있으면 원하는 판본을 선택합니다.
